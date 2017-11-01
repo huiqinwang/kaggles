@@ -22,29 +22,44 @@ def load_dataSet():
     dataSet = pd.read_csv(root_path+"train.csv")
     return dataSet
 
-def preprocess_data(dataSet,keep_scaled):
+def preprocess_data(keep_scaled):
     '''
     对源数据集进行预处理
     :param dataSet:
     :return:
     '''
-    origin_data = dataSet
+    origin_data = load_dataSet()
 
     # fill null
     origin_data['Embarked'] = origin_data['Embarked'].fillna(origin_data.Embarked.dropna().mode().values[0])
-    origin_data.Cabin[origin_data.Cabin.isnull()] = 'U0'
+    origin_data['Cabin'] = origin_data['Cabin'].fillna("U0")
 
     # predict age
+    print("predict age:                         ")
     origin_data = predictAge(origin_data)
 
     # discretization characteristic
+    print("discretization characteristic:                         ")
     origin_data = discretizationData(origin_data)
-    print(origin_data[:10])
+    origin_data = qcutData(origin_data)
+
+    # split name
+    print("split name:                         ")
+    origin_data = splitName(origin_data)
+
+    # preprocess Ticket
+    print("preprocess Ticket:                         ")
+    origin_data = preprocessTicket(origin_data)
 
     # scaled data
+    print("keep_scaled:                         ")
     if keep_scaled:
         origin_data = standardData(origin_data)
 
+    # combine data
+    print("combine data:                         ")
+    origin_data = combineFeature(origin_data)
+    print(origin_data[:5])
 
 def predictAge(origin_data):
     '''
@@ -74,7 +89,6 @@ def discretizationData(origin_data):
     origin_data['CabinLetter'] = origin_data['Cabin'].map(lambda x: re.compile("([a-zA-Z]+)").search(x).group())
     origin_data['CabinLetter'] = pd.factorize(origin_data.CabinLetter)[0]
     origin_data['CabinNumber'] = origin_data['Cabin'].map(lambda x: getCabinNumber(x)).astype(int)+1
-    origin_data = processFare(origin_data)
     return origin_data
 
 def getCabinNumber(cabin):
@@ -89,16 +103,18 @@ def getCabinNumber(cabin):
     else:
         return 0
 
-def processFare(origin_data):
+def qcutData(origin_data):
     '''
     四分位离散化票价
     :param origin_data:
     :return:
     '''
-    origin_data['Fare'][origin_data.Fare.isnull()] = origin_data.Fare.dropna().mean()
-    origin_data['Fare'][np.where(origin_data['Fare']==0)[0]] = origin_data['Fare'][origin_data.Fare.nonzero()[0]].min()/10
-    origin_data['Fare_bin'] = pd.qcut(origin_data.Fare,4)
-    origin_data["Fare_bin_id"] = pd.factorize(origin_data.Fare_bin)[0]+1
+    feature_list = ['Fare','Age']
+    for name in feature_list:
+        origin_data[name] = origin_data[name].fillna( origin_data[name].dropna().mean())
+        origin_data[name][np.where(origin_data[name]==0)[0]] = origin_data[name][origin_data[name].nonzero()[0]].min()/10
+        origin_data[name+"_bin"] = pd.qcut(origin_data[name],4)
+        origin_data[name+"_bin_id"] = pd.factorize(origin_data[name+"_bin"])[0]+1
     return  origin_data
 
 def standardData(origin_data):
@@ -108,13 +124,105 @@ def standardData(origin_data):
     :return:
     '''
     scaler = StandardScaler()
-    Fare_array = np.array(origin_data.Fare_bin_id).reshape(len(origin_data.Fare_bin_id),1)
-    origin_data['Fare_bin_id_scaled'] = scaler.fit_transform(Fare_array).reshape(len(origin_data.Fare_bin_id),)
-    Age_array = np.array(origin_data.Age).reshape(len(origin_data.Age),1)
-    origin_data['Age_Scaled'] = scaler.fit_transform(Age_array).reshape(len(origin_data.Age),)
+    feature_list = ['Age', 'Fare', 'Pclass', 'Parch', 'SibSp',
+                            'Title_id', 'CabinNumber', 'Age_bin_id', 'Fare_bin_id']
+    for name in feature_list:
+        origin_data = standardSingle(origin_data,name,scaler)
     return origin_data
 
+def standardSingle(origin_data,name,scaler):
+    print(name)
+    tmp_array = np.array(origin_data[name]).reshape(len(origin_data[name]),1)
+    origin_data[name+"_scaled"] = scaler.fit_transform(tmp_array).reshape(len(origin_data[name]), )
+    return origin_data
+
+def splitName(origin_data):
+    '''
+    分割名字
+    :param origin_data:
+    :return:
+    '''
+    origin_data['Title'] = origin_data['Name'].map(lambda x: re.compile(",(.*?)\.").findall(x)[0])
+    origin_data['Title'][origin_data.Title=='Jonkheer'] = 'Master'
+    origin_data['Title'][origin_data.Title.isin(['Ms','Mlle'])] = 'Miss'
+    origin_data['Title'][origin_data.Title == 'Mme'] = 'Mrs'
+    origin_data['Title'][origin_data.Title.isin(['Capt','Don','Major','col','Sir'])] = 'Sir'
+    origin_data['Title'][origin_data.Title.isin(['Dona','Lady','the Countess'])] = 'Lady'
+    origin_data['Title_id'] = pd.factorize(origin_data.Title)[0]+1
+    return  origin_data
+
+def preprocessTicket(origin_data):
+    '''
+    处理票单号
+    :param origin_data:
+    :return:
+    '''
+    origin_data['TicketPreficx'] = origin_data['Ticket'].map(lambda x: getTicketPrefix(x.upper()))
+    origin_data['TicketPreficx'] = origin_data['TicketPreficx'].map(lambda x:re.sub('[\.?\/?]','',x))
+    origin_data['TicketPreficx'] = origin_data['TicketPreficx'].map(lambda x:re.sub('STON','SOTON',x))
+    origin_data['TicketPreficx'] = pd.factorize(origin_data['TicketPreficx'])[0]
+
+    origin_data['TicketNumber'] = origin_data['Ticket'].map(lambda x: getTicketNumber(x))
+    origin_data['TicketNumberLength'] = origin_data['TicketNumber'].map(lambda x: len(x)).astype(int)
+    origin_data['TicketNumberStart'] = origin_data['TicketNumber'].map(lambda x: x[0:1]).astype(int)
+    origin_data['TicketNumber'] = origin_data['TicketNumber'].astype(int)
+    return origin_data
+
+def getTicketPrefix(ticket):
+    '''
+    分割票价前缀
+    :param ticket:
+    :return:
+    '''
+    match = re.compile("([a-zA-Z\.\/]+)").search(ticket)
+    if match:
+        return  match.group()
+    else:
+        return 'U'
+
+def getTicketNumber(ticket):
+    '''
+    票号数字部分
+    :param ticket:
+    :return:
+    '''
+    match = re.compile("(^[0-9]+$)").search(ticket)
+    if match:
+        return  match.group()
+    else:
+        return  '0'
+
+
+def combineFeature(origin_data):
+    '''
+    组合特征
+    :param origin_data:
+    :return:
+    '''
+    numerics = origin_data.loc[:,['Age_scaled', 'Fare_scaled', 'Pclass_scaled', 'Parch_scaled', 'SibSp_scaled',
+                            'Title_id_scaled', 'CabinNumber_scaled', 'Age_bin_id_scaled', 'Fare_bin_id_scaled']]
+    new_fields_count = 0
+    for i in range(numerics.columns.size-1):
+        for j in range(numerics.columns.size-1):
+            if i <= j:
+                name = str(numerics.columns.values[i]) + "*" + str(numerics.columns.values[j])
+                origin_data = pd.concat([origin_data,pd.Series(numerics.iloc[:,i] * numerics.iloc[:,j],name=name)],axis=1)
+                new_fields_count +=1
+            if i < j:
+                name = str(numerics.columns.values[i]) + "+" + str(numerics.columns.values[j])
+                origin_data = pd.concat([origin_data,pd.Series(numerics.iloc[:,i] + numerics.iloc[:,j],name=name)],axis=1)
+                new_fields_count +=1
+            if not i == j:
+                name = str(numerics.columns.values[i]) + "/" + str(numerics.columns.values[j])
+                origin_data = pd.concat([origin_data,pd.Series(numerics.iloc[:,i] / numerics.iloc[:,j],name=name)],axis=1)
+                new_fields_count +=1
+                name = str(numerics.columns.values[i]) + "-" + str(numerics.columns.values[j])
+                origin_data = pd.concat([origin_data,pd.Series(numerics.iloc[:,i] - numerics.iloc[:,j],name=name)],axis=1)
+                new_fields_count +=1
+    print("\n",new_fields_count,"new features generated")
+    return  origin_data
+
+
 if __name__ == "__main__":
-    dataSet = load_dataSet()
     keep_scaled = True
-    preprocess_data(dataSet,keep_scaled)
+    preprocess_data(keep_scaled)
