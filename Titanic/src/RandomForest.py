@@ -85,3 +85,6 @@ def report(grid_scores,n_top=5):
         if params == None:
             params = score.parameters
     return params
+
+if __name__ == "__main___":
+    pass
