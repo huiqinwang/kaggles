@@ -9,41 +9,86 @@ from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import GridSearchCV
+import PreprocessData
+import SelectFeature
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+import csv
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import warnings
+warnings.filterwarnings('ignore')
 
 
-class featureRandomForest(df):
+def randomForestTrain(train_data,test_data,importance_idx=None,sorted_idx=None):
     '''
-    随机森林训练数据集，获得重要特征
+    随机森林预测
+    :return:
     '''
-    X = df.values[:,1:]
-    y = df.values[:,0]
+    test_pid = test_data['PassengerId'].reset_index()
+    train_data = train_data.drop(['PassengerId'], axis=1)
+    test_data = test_data.drop(['PassengerId'], axis=1)
+
+    X = train_data.values[:, 1:]
+    y = train_data.values[:, 0]
+    # choose best feature before 0.8097
+    # X = X[:, importance_idx][:, sorted_idx]
+    # test_data = test_data.iloc[:,importance_idx].iloc[:,sorted_idx]
+    # X_test = test_data
+    # print(test_data.head())
+
+    # split
+    # train_X,test_X,train_y,test_y = train_test_split(X,y,random_state=42,test_size=0.2)
+    # select best parameter
+    # best_parameter = selectParameter(train_X,train_y)
+    # print(best_parameter)
+
+    sqrtFeat = int(np.sqrt(X.shape[1]))
+    minSamSplit = int(X.shape[0] * 0.015)
+
+    forest = RandomForestClassifier(
+                 n_estimators=10000,
+                 criterion="gini",
+                 max_depth=30,
+                 min_samples_split=minSamSplit,
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
+                 max_features="sqrt",
+                 max_leaf_nodes=None,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
+                 bootstrap=True,
+                 oob_score=True,
+                 n_jobs=3,
+                 random_state=None,
+                 verbose=0,
+                 warm_start=False,
+                 class_weight=None)
+
+    # 给标签加权重，解决不平衡问题
     survived_weight = .75
+    # y_weights = np.array([survived_weight if s == 0 else 1 for s in train_y])
+    # forest.fit(train_X, train_y, sample_weight=y_weights)
     y_weights = np.array([survived_weight if s == 0 else 1 for s in y])
+    forest.fit(X, y, sample_weight=y_weights)
 
-    print("Rough fitting RandomForest to determine feature importance...")
-    forest = RandomForestClassifier(oob_score=True,n_estimators=10000)
-    forest.fit(X,y,sample_weight=y_weights)
-    feature_importance = forest.feature_importances_
-    feature_importance = 100.0 * (feature_importance/feature_importance.max())
+    # acurracy
+    print(forest.oob_score_)
+    # predict_y = forest.predict(test_X)
+    # print(accuracy_score(test_y,predict_y))
+    # print(confusion_matrix(test_y,predict_y))
 
-    fi_threshold = 18
-    importance_idx = np.where(feature_importance > fi_threshold)[0]
-    importance_features = features_list[importance_idx]
-    print("\n",importance_features.shape[0],"importance features(>",fi_threshold,"% of max importance)...\n")
+    # forest
+    X_test = test_data.values[:, 1:]
+    y_predict = forest.predict(X_test)
 
-    sorted_idx = np.argsort(feature_importance[importance_idx])[::-1]
-    pos = np.arrange(sorted_idx.shape[0])+.5
-    plt.subplot(1,2,2)
-    plt.title("Feature Importance")
-    plt.barh(pos,feature_importance[importance_idx][sorted_idx[::-1]],color='r',align='center')
-    plt.yticks(pos,importance_features[sorted_idx[::-1]])
-    plt.xlabel('Relative Importance')
-    plt.draw()
-    plt.show()
-    X = X[:,importance_idx][:,sorted_idx]
-    submit_df = submit_df.iloc[:,importance_idx].iloc[:,sorted_idx]
+    y_series = pd.Series(y_predict, name='Survived').map(lambda x: int(x))
+    print(y_series[-1::])
 
-
+    result = pd.concat([test_pid, y_series], axis=1).drop('index', axis=1)
+    print(result[:5])
+    files = open("/home/wanghuiqin/workspace/gits/kaggles/Titanic/res/gender_submission.csv", mode='wb')
+    result.to_csv(files, index=False)
 
 def selectParameter(X,y):
     '''
@@ -54,18 +99,22 @@ def selectParameter(X,y):
     sqrtFeat = int(np.sqrt(X.shape[1]))
     minSamSplit = int(X.shape[0]*0.015)
 
-    grid_test1 = {'n_estimators'    :[1000,2500,5000],
+    # grid_test1 = {'n_estimators'    :[1000,2500,5000],
+    #               'criterion'       :['gini','entropy'],
+    #               'max_feature'     :[sqrtFeat-1,sqrtFeat,sqrtFeat+1],
+    #               'max_depth'       :[5,10,25],
+    #               'min_samples_split'  :[2,5,10,minSamSplit]}
+    grid_test1 = {'n_estimators'    :[1000,10],
                   'criterion'       :['gini','entropy'],
-                  'max_feature'     :[sqrtFeat-1,sqrtFeat,sqrtFeat+1],
-                  'max_depth'       :[5,10,25],
-                  'min_samples_split'  :[2,5,10,minSamSplit]}
+                  'max_features'     :[sqrtFeat-1,sqrtFeat],
+                  'max_depth'       :[5,10],
+                  'min_samples_split'  :[2,5]}
     forest = RandomForestClassifier(oob_score=True)
     print("Hyperparameter optimization using GridSearchCV...")
-    grid_search = GridSearchCV(forest,grid_test1,n_jobs=-1,cv=10)
+    grid_search = GridSearchCV(forest,grid_test1,n_jobs=3,cv=10)
     grid_search.fit(X,y)
     best_params_from_grid_search = report(grid_search.grid_scores_)
-
-
+    return best_params_from_grid_search
 
 def report(grid_scores,n_top=5):
     '''
@@ -74,6 +123,8 @@ def report(grid_scores,n_top=5):
     :param n_top:
     :return:
     '''
+    print(grid_scores)
+    print(type(grid_scores))
     params = None
     top_scores = sorted(grid_scores,key=itemgetter(1),reverse=True)[::n_top]
     for i,score in enumerate(top_scores):
@@ -86,5 +137,11 @@ def report(grid_scores,n_top=5):
             params = score.parameters
     return params
 
-if __name__ == "__main___":
-    pass
+
+if __name__ == "__main__":
+    print("test")
+    train_data,test_data,origin_data = PreprocessData.process_data(bins=True,scaled=True,binary=True)
+    print(len(train_data.columns))
+    # featureRandomForest(train_data,test_data)
+    # importance_idx,sorted_idx = SelectFeature.featureSelect_RandomForest(train_data,test_data)
+    randomForestTrain(train_data,test_data)

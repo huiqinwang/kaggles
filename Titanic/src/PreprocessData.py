@@ -61,6 +61,9 @@ def process_data(binary=False, bins=False, scaled=False, strings=False,
     processAge()
     processDrops()
 
+    # combine feature
+    combineFeature()
+
     # change survived index
     columns_list = list(origin_data.columns.values)
     columns_list.remove('Survived')
@@ -69,13 +72,13 @@ def process_data(binary=False, bins=False, scaled=False, strings=False,
     new_col_list.extend(columns_list)
 
     origin_data = origin_data.reindex(columns=new_col_list)
-    print("feature's lens: ", origin_data.columns.size, "manually generated features...\n", origin_data.columns.values)
+    print("feature's lens: ", origin_data.columns.size,len(origin_data.columns), "manually generated features...\n", origin_data.columns.values)
 
-    # combine feature
-    combineFeature()
-
-    train_data = origin_data[:,train_data.shape[0]]
-    submit_data = origin_data[train_data.shape[0]:]
+    train_data = origin_data[:train_data.shape[0]]
+    test_data = origin_data[train_data.shape[0]:]
+    print(train_data[:5])
+    print(test_data[:5])
+    print(len(train_data), len(test_data))
 
     return train_data,test_data,origin_data
 
@@ -165,8 +168,9 @@ def processFare():
     origin_data.loc[np.isnan(origin_data['Fare']),'Fare'] =  origin_data['Fare'].median()
     origin_data.loc[np.where(origin_data['Fare'] == 0)[0],'Fare']= origin_data.loc[origin_data['Fare'].nonzero()[0],'Fare'].min() / 10
     origin_data['Fare_bin'] = pd.qcut(origin_data['Fare'], 4)
+
     if keep_binary:
-        origin_data = pd.concat([origin_data, pd.get_dummies(origin_data['Fare_bin']).rename(columns=lambda x: 'Fare_' + str(x))])
+        origin_data = pd.concat([origin_data, pd.get_dummies(origin_data['Fare_bin']).rename(columns=lambda x: 'Fare_' + str(x))],axis=1)
 
     if keep_bins:
         origin_data['Fare_bin_id'] = pd.factorize(origin_data['Fare_bin'])[0] + 1
@@ -199,7 +203,7 @@ def processEmbarked():
     origin_data.loc[origin_data.Embarked.isnull(),'Embarked']= origin_data.Embarked.dropna().mode().values
     origin_data['Embarked'] = pd.factorize(origin_data['Embarked'])[0]
     if keep_binary:
-        origin_data = pd.concat([origin_data, pd.get_dummies(origin_data['Embarked']).rename(columns=lambda x: 'Embarked_' + str(x))])
+        origin_data = pd.concat([origin_data, pd.get_dummies(origin_data['Embarked']).rename(columns=lambda x: 'Embarked_' + str(x))],axis=1)
 
 
 def processPClass():
@@ -211,7 +215,7 @@ def processPClass():
     origin_data.loc[origin_data.Pclass.isnull(),'Pclass'] = origin_data.Pclass.dropna().mode().values
 
     if keep_binary:
-        origin_data = pd.concat([origin_data, pd.get_dummies(origin_data['Pclass']).rename(columns=lambda x: 'Pclass_' + str(x))])
+        origin_data = pd.concat([origin_data, pd.get_dummies(origin_data['Pclass']).rename(columns=lambda x: 'Pclass_' + str(x))],axis=1)
 
     if keep_scaled:
         singleStandard('Pclass')
@@ -276,7 +280,7 @@ def processAge():
     # bin into quartiles and create binary features
     origin_data['Age_bin'] = pd.qcut(origin_data['Age'], 4)
     if keep_binary:
-        origin_data = pd.concat([origin_data, pd.get_dummies(origin_data['Age_bin']).rename(columns=lambda x: 'Age_' + str(x))])
+        origin_data = pd.concat([origin_data, pd.get_dummies(origin_data['Age_bin']).rename(columns=lambda x: 'Age_' + str(x))],axis=1)
 
     if keep_bins:
         origin_data['Age_bin_id'] = pd.factorize(origin_data['Age_bin'])[0] + 1
@@ -349,11 +353,10 @@ def combineFeature():
                 name = str(numerics.columns.values[i]) + "-" + str(numerics.columns.values[j])
                 origin_data = pd.concat([origin_data,pd.Series(numerics.iloc[:,i] - numerics.iloc[:,j],name=name)],axis=1)
                 new_fields_count +=1
+
     print("\n",new_fields_count,"new features generated")
 
 
 
 if __name__ == "__main__":
-    result = process_data(bins=True,scaled=True)
-
-    print(result.head())
+    train,test,result = process_data(bins=True,scaled=True,binary=True)
