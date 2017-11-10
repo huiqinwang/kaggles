@@ -360,3 +360,5 @@ def combineFeature():
 
 if __name__ == "__main__":
     train,test,result = process_data(bins=True,scaled=True,binary=True)
+    from sklearn.model_selection import KFold
+    n = KFold()

@@ -2,10 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="fe07c332-1440-4406-8e79-009df0fc7b24" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/Titanic/src/algorithm.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Titanic/doc/.ipynb_checkpoints/TitanicData-checkpoint.ipynb" afterPath="$PROJECT_DIR$/Titanic/doc/.ipynb_checkpoints/TitanicData-checkpoint.ipynb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Titanic/doc/TitanicData.ipynb" afterPath="$PROJECT_DIR$/Titanic/doc/TitanicData.ipynb" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Titanic/doc/featureExacuter.ipynb" afterPath="$PROJECT_DIR$/Titanic/doc/featureExacuter.ipynb" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Titanic/src/PreprocessData.py" afterPath="$PROJECT_DIR$/Titanic/src/PreprocessData.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -28,11 +26,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="PreprocessData.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="PreprocessData.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Titanic/src/PreprocessData.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="428">
-              <caret line="77" column="49" lean-forward="true" selection-start-line="77" selection-start-column="49" selection-end-line="77" selection-end-column="49" />
+            <state relative-caret-position="658">
+              <caret line="363" column="10" lean-forward="true" selection-start-line="363" selection-start-column="10" selection-end-line="363" selection-end-column="10" />
               <folding>
                 <element signature="e#190#209#0" expanded="true" />
               </folding>
@@ -82,11 +80,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="_split.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="_split.py" pinned="false" current-in-tab="true">
         <entry file="file:///usr/local/lib/python2.7/dist-packages/sklearn/model_selection/_split.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="34200">
-              <caret line="1919" column="4" lean-forward="false" selection-start-line="1919" selection-start-column="4" selection-end-line="1919" selection-end-column="4" />
+            <state relative-caret-position="1440">
+              <caret line="447" column="4" lean-forward="false" selection-start-line="447" selection-start-column="4" selection-end-line="447" selection-end-column="13" />
               <folding />
             </state>
           </provider>
@@ -130,10 +128,10 @@
         <option value="$PROJECT_DIR$/Titanic/src/Logistics.py" />
         <option value="$PROJECT_DIR$/Titanic/src/LogisticRegression.py" />
         <option value="$PROJECT_DIR$/Titanic/src/test.py" />
-        <option value="$PROJECT_DIR$/Titanic/src/PreprocessData.py" />
         <option value="$PROJECT_DIR$/Titanic/src/SelectFeature.py" />
         <option value="$PROJECT_DIR$/Titanic/src/RandomForest.py" />
         <option value="$PROJECT_DIR$/Titanic/src/algorithm.py" />
+        <option value="$PROJECT_DIR$/Titanic/src/PreprocessData.py" />
       </list>
     </option>
   </component>
@@ -565,14 +563,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/local/lib/python2.7/dist-packages/sklearn/model_selection/_split.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="34200">
-          <caret line="1919" column="4" lean-forward="false" selection-start-line="1919" selection-start-column="4" selection-end-line="1919" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Titanic/src/LogisticRegression.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="126">
@@ -626,11 +616,19 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Titanic/src/PreprocessData.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="428">
-          <caret line="77" column="49" lean-forward="true" selection-start-line="77" selection-start-column="49" selection-end-line="77" selection-end-column="49" />
+        <state relative-caret-position="658">
+          <caret line="363" column="10" lean-forward="true" selection-start-line="363" selection-start-column="10" selection-end-line="363" selection-end-column="10" />
           <folding>
             <element signature="e#190#209#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/lib/python2.7/dist-packages/sklearn/model_selection/_split.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1440">
+          <caret line="447" column="4" lean-forward="false" selection-start-line="447" selection-start-column="4" selection-end-line="447" selection-end-column="13" />
+          <folding />
         </state>
       </provider>
     </entry>
