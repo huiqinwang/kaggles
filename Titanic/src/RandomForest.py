@@ -87,7 +87,7 @@ def randomForestTrain(train_data,test_data,importance_idx=None,sorted_idx=None):
 
     result = pd.concat([test_pid, y_series], axis=1).drop('index', axis=1)
     print(result[:5])
-    files = open("/home/wanghuiqin/workspace/gits/kaggles/Titanic/res/gender_submission.csv", mode='wb')
+    files = open("/Users/huiqin08/WorkSpace/Git_WorkSpace/data/Titanic/gender_submission.csv", mode='wb')
     result.to_csv(files, index=False)
 
 def selectParameter(X,y):

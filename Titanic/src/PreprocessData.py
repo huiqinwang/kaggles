@@ -24,7 +24,7 @@ def load_dataSet():
     获取源数据集
     :return: dataFrame
     '''
-    root_path = '/home/wanghuiqin/workspace/data/Titanic/'
+    root_path = '/Users/huiqin08/WorkSpace/Git_WorkSpace/data/Titanic/'
     train_data = pd.read_csv(root_path+"train.csv",header=0)
     test_data = pd.read_csv(root_path+"test.csv",header=0)
     dataSet = pd.concat([train_data,test_data])
